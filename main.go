@@ -129,7 +129,9 @@ func main() {
 		compressionType = "LZMA compressed"
 	}
 
-	getRect(fileBytes)
+	frameSize := getRect(fileBytes)
+	frameRate := fileBytes[10]
+	frameCount := fileBytes[11]
 
-	fmt.Printf("Signature: %s\nCompression type: %c (%s)\nSWF version: %d\nUncompressed size (bytes): %d\n", signature, compressionSignature, compressionType, version, bytesSize)
+	fmt.Printf("Signature: %s\nCompression type: %c (%s)\nSWF version: %d\nUncompressed size (bytes): %d\nFrame size (twips):\n  N-bits: %d\n  X minimum: %d\n  X maximum: %d\n  Y minimum: %d\n  Y maximum: %d\nFramerate: %dfps\nFrame count: %d\n", signature, compressionSignature, compressionType, version, bytesSize, frameSize.Nbits, frameSize.Xmin, frameSize.Xmax, frameSize.Ymin, frameSize.Ymax, frameRate, frameCount)
 }

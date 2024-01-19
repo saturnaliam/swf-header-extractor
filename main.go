@@ -98,17 +98,7 @@ func getRect(data []byte) Rect {
 	return rectData
 }
 
-func main() {
-	// parsing the arguments passed to the program
-	commandLineArgs := os.Args
-
-	if len(commandLineArgs) != 2 {
-		fmt.Printf("usage: %s <file>\n", filepath.Base(commandLineArgs[0]))
-		os.Exit(1)
-	}
-
-	fileBytes := readFileBytes(commandLineArgs[1])
-
+func printHeader(fileBytes []byte) {
 	// getting the easily accessible data
 	signature := fileBytes[:3]
 	compressionSignature := fileBytes[0]
@@ -121,17 +111,65 @@ func main() {
 	if compressionSignature == 'C' {
 		compressionType = "zlib compressed"
 
-		fileBytes = decompress(fileBytes[8:])
+		decompressed := decompress(fileBytes[8:])
+		fileBytes = append(fileBytes[:8], decompressed...)
 	} else if compressionSignature == 'F' {
-		fileBytes = fileBytes[8:]
 		compressionType = "uncompressed"
-	} else {
-		compressionType = "LZMA compressed"
 	}
 
-	frameSize := getRect(fileBytes)
-	frameRate := fileBytes[10]
-	frameCount := fileBytes[11]
+	// ensuring the signature is valid
+	if string(signature) != "FWS" && string(signature) != "CWS" {
+		fmt.Printf("Unknown signature: %s. Expected 'FWS' or 'CWS'.\n", string(signature))
+		os.Exit(1)
+	}
+
+	frameSize := getRect(fileBytes[8:])
+	frameRate := fileBytes[18]
+	frameCount := fileBytes[19]
 
 	fmt.Printf("Signature: %s\nCompression type: %c (%s)\nSWF version: %d\nUncompressed size (bytes): %d\nFrame size (twips):\n  N-bits: %d\n  X minimum: %d\n  X maximum: %d\n  Y minimum: %d\n  Y maximum: %d\nFramerate: %dfps\nFrame count: %d\n", signature, compressionSignature, compressionType, version, bytesSize, frameSize.Nbits, frameSize.Xmin, frameSize.Xmax, frameSize.Ymin, frameSize.Ymax, frameRate, frameCount)
+}
+
+func decompressFile(fileBytes []byte, fileName string) {
+	if fileBytes[0] != 'C' {
+		fmt.Printf("file already decompressed!")
+		return
+	}
+
+	pwd, _ := os.Getwd()
+	outputFilename := pwd + strings.Trim(fileName, ".swf") + "_decompiled.swf"
+	file, err := os.Create(outputFilename)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	decompressed := decompress(fileBytes[8:])
+	fileBytes = append(fileBytes[:8], decompressed...)
+	fileBytes[0] = 'F'
+
+	file.Write(fileBytes)
+}
+
+func main() {
+	// parsing the arguments passed to the program
+	commandLineArgs := os.Args
+
+	if len(commandLineArgs) < 2 {
+		fmt.Printf("usage: %s -d <file>\n", filepath.Base(commandLineArgs[0]))
+		os.Exit(1)
+	}
+
+	if len(commandLineArgs) == 2 {
+		fileBytes := readFileBytes(commandLineArgs[1])
+		printHeader(fileBytes)
+	} else if commandLineArgs[1] == "-d" {
+		fileBytes := readFileBytes(commandLineArgs[2])
+		decompressFile(fileBytes, commandLineArgs[2])
+	} else {
+		fmt.Printf("unknown argument: %s\n", commandLineArgs[1])
+		os.Exit(1)
+	}
 }

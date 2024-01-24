@@ -127,7 +127,7 @@ func printHeader(fileBytes []byte) {
 	frameRate := fileBytes[18]
 	frameCount := fileBytes[19]
 
-	fmt.Printf("Signature: %s\nCompression type: %c (%s)\nSWF version: %d\nUncompressed size (bytes): %d\nFrame size (twips):\n  N-bits: %d\n  X minimum: %d\n  X maximum: %d\n  Y minimum: %d\n  Y maximum: %d\nFramerate: %dfps\nFrame count: %d\n", signature, compressionSignature, compressionType, version, bytesSize, frameSize.Nbits, frameSize.Xmin, frameSize.Xmax, frameSize.Ymin, frameSize.Ymax, frameRate, frameCount)
+	fmt.Printf("Signature: %s\nCompression type: %c (%s)\nSWF version: %d\nUncompressed size (bytes): %d\nFrame size (twips):\n  N-bits: %d\n  X minimum: %d (%d pixels)\n  X maximum: %d (%d pixels)\n  Y minimum: %d (%d pixels)\n  Y maximum: %d (%d pixels)\nFramerate: %dfps\nFrame count: %d\n", signature, compressionSignature, compressionType, version, bytesSize, frameSize.Nbits, frameSize.Xmin, frameSize.Xmin / 20, frameSize.Xmax, frameSize.Xmax / 20, frameSize.Ymin, frameSize.Ymin / 20, frameSize.Ymax, frameSize.Ymax / 20, frameRate, frameCount)
 }
 
 func decompressFile(fileBytes []byte, fileName string) {
